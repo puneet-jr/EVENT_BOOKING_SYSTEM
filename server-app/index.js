@@ -1,18 +1,18 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
-// These routes don't exist yet, so comment them until created
-// import eventRoutes from './routes/eventRoutes.js';
-// import bookingRoutes from './routes/bookingRoutes.js';
+import eventRoutes from './routes/eventRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
+// Routes
 app.use('/auth', authRoutes);
-// app.use('/events', eventRoutes);
-// app.use('/bookings', bookingRoutes);
+app.use('/events', eventRoutes);
+app.use('/bookings', bookingRoutes);
 
 // 404 handler
 app.use((req, res) => {
