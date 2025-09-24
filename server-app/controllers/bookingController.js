@@ -45,7 +45,7 @@ export const cancelBooking = asyncHandler(async (req, res) => {
 });
 
 export const getEventAvailability = asyncHandler(async (req, res) => {
-  const { eventId } = req.params;  // Fixed destructuring
+  const { eventId } = req.params;  
   const availability = await BookingService.getEventAvailability(Number(eventId));
 
   if (!availability) {

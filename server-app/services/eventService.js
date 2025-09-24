@@ -1,4 +1,5 @@
 import db from '../db.js';
+import { sendEmail } from '../utils/emailUtils.js';
 
 export class EventService {
   static async createEvent({ title, date, capacity, description, createdBy }) {
@@ -40,14 +41,39 @@ export class EventService {
   }
   
   static async cancelEvent(eventId) {
+    // Cancel the event
     await db.query(
       `UPDATE events SET status = 'cancelled' WHERE id = ?`,
       [eventId]
     );
+
+    // Fetch booked users
+    const [bookings] = await db.query(
+      `SELECT u.email, u.name, e.title 
+       FROM bookings b 
+       JOIN users u ON b.user_id = u.id 
+       JOIN events e ON b.event_id = e.id 
+       WHERE b.event_id = ? AND b.status = 'confirmed'`,
+      [eventId]
+    );
+
+    // Update bookings to cancelled
+    await db.query(
+      `UPDATE bookings SET status = 'cancelled', cancelled_date = NOW() 
+       WHERE event_id = ? AND status = 'confirmed'`,
+      [eventId]
+    );
+
+    // Send cancellation email simulation to all booked users
+    const subject = 'Event Cancellation Notice';
+    for (const booking of bookings) {
+      const text = `Dear ${booking.name}, your booking for the event "${booking.title}" has been cancelled due to event cancellation.`;
+      await sendEmail(booking.email, subject, text);
+    }
+
     return true;
   }
 
-  // For admin dashboard
   static async getEventsByAdmin(adminId) {
     const [rows] = await db.query(
       `SELECT id, title, description, date, capacity, status, created_at 

@@ -1,6 +1,6 @@
 import db from '../db.js';
+import { sendEmail } from '../utils/emailUtils.js';
 
-// Custom error for consistent handling
 class BookingError extends Error {
   constructor(message, statusCode = 400) {
     super(message);
@@ -10,7 +10,6 @@ class BookingError extends Error {
 }
 
 export class BookingService {
-  // Validate event before booking
   static validateEventForBooking(event, alreadyBooked) {
     if (!event) throw new BookingError('Event not found or cancelled', 404);
     if (new Date(event.date) < new Date()) throw new BookingError('Cannot book past events', 400);
@@ -18,7 +17,6 @@ export class BookingService {
     if (event.available_seats <= 0) throw new BookingError('Event is fully booked', 400);
   }
 
-  // Validate booking before cancellation
   static validateBookingForCancel(booking) {
     if (!booking) throw new BookingError('Booking not found or already cancelled', 404);
     if (new Date(booking.date) < new Date()) throw new BookingError('Cannot cancel past events', 400);
@@ -105,8 +103,10 @@ export class BookingService {
     try {
       await connection.beginTransaction();
       const [bookingRows] = await connection.query(
-        `SELECT b.id, b.event_id, e.date 
-         FROM bookings b JOIN events e ON b.event_id = e.id 
+        `SELECT b.id, b.event_id, e.date, e.title, u.email, u.name 
+         FROM bookings b 
+         JOIN events e ON b.event_id = e.id 
+         JOIN users u ON b.user_id = u.id 
          WHERE b.id = ? AND b.user_id = ? AND b.status = 'confirmed'
          FOR UPDATE`,
         [bookingId, userId]
@@ -124,6 +124,12 @@ export class BookingService {
          WHERE id = ?`,
         [booking.event_id]
       );
+
+      // Send cancellation email simulation
+      const subject = 'Booking Cancellation Confirmation';
+      const text = `Dear ${booking.name}, your booking for the event "${booking.title}" has been cancelled.`;
+      await sendEmail(booking.email, subject, text);
+
       await connection.commit();
       return true;
     } catch (error) {
