@@ -1,0 +1,224 @@
+ENDPOINTS AND SAMPLE API CALLS FOR EVENT BOOKING SYSTEM
+
+Base URL: http://localhost:5001 (assuming default port from .env)
+
+================================================================================
+AUTHENTICATION ENDPOINTS
+================================================================================
+
+1. POST /auth/signup
+   Description: Register a new user account.
+   Headers: Content-Type: application/json
+   Body:
+   {
+     "name": "John Doe",
+     "email": "john@example.com",
+     "password": "password123",
+     "role": "user"
+   }
+   Sample Response (201):
+   {
+     "message": "Account created successfully",
+     "token": "jwt_token_here",
+     "user": {
+       "id": 1,
+       "name": "John Doe",
+       "email": "john@example.com",
+       "role": "user"
+     }
+   }
+
+2. POST /auth/login
+   Description: Log in an existing user.
+   Headers: Content-Type: application/json
+   Body:
+   {
+     "email": "john@example.com",
+     "password": "password123"
+   }
+   Sample Response (200):
+   {
+     "message": "Login successful",
+     "token": "jwt_token_here",
+     "user": {
+       "id": 1,
+       "name": "John Doe",
+       "email": "john@example.com",
+       "role": "user"
+     }
+   }
+
+3. GET /auth/profile
+   Description: Get the authenticated user's profile.
+   Headers: Authorization: Bearer <jwt_token>
+   Sample Response (200):
+   {
+     "user": {
+       "id": 1,
+       "name": "John Doe",
+       "email": "john@example.com",
+       "role": "user",
+       "created_at": "2023-01-01T00:00:00.000Z",
+       "last_login": "2023-01-01T00:00:00.000Z"
+     }
+   }
+
+================================================================================
+EVENT ENDPOINTS
+================================================================================
+
+4. GET /events
+   Description: Get all active upcoming events (public).
+   Sample Response (200):
+   {
+     "events": [
+       {
+         "id": 1,
+         "title": "Sample Event",
+         "description": "Description here",
+         "date": "2025-10-01T10:00:00.000Z",
+         "capacity": 100,
+         "status": "active",
+         "created_at": "2023-01-01T00:00:00.000Z"
+       }
+     ]
+   }
+
+5. GET /events/:id
+   Description: Get details of a specific event by ID (public).
+   URL: /events/1
+   Sample Response (200):
+   {
+     "event": {
+       "id": 1,
+       "title": "Sample Event",
+       "description": "Description here",
+       "date": "2025-10-01T10:00:00.000Z",
+       "capacity": 100,
+       "status": "active",
+       "created_at": "2023-01-01T00:00:00.000Z",
+       "created_by": 2
+     }
+   }
+
+6. POST /events
+   Description: Create a new event (admin only).
+   Headers: Authorization: Bearer <admin_jwt_token>, Content-Type: application/json
+   Body:
+   {
+     "title": "New Event",
+     "date": "2025-12-01T10:00:00.000Z",
+     "capacity": 50,
+     "description": "Event description"
+   }
+   Sample Response (201):
+   {
+     "message": "Event created successfully",
+     "event": {
+       "id": 2,
+       "title": "New Event",
+       "description": "Event description",
+       "date": "2025-12-01T10:00:00.000Z",
+       "capacity": 50,
+       "status": "active",
+       "createdBy": 2
+     }
+   }
+
+7. DELETE /events/:id/cancel
+   Description: Cancel an event (admin only, must be creator or super_admin).
+   Headers: Authorization: Bearer <admin_jwt_token>
+   URL: /events/1/cancel
+   Sample Response (200):
+   {
+     "message": "Event cancelled successfully"
+   }
+
+8. GET /events/admin/dashboard
+   Description: Get events created by the admin.
+   Headers: Authorization: Bearer <admin_jwt_token>
+   Sample Response (200):
+   {
+     "events": [
+       {
+         "id": 1,
+         "title": "Sample Event",
+         "description": "Description here",
+         "date": "2025-10-01T10:00:00.000Z",
+         "capacity": 100,
+         "status": "active",
+         "created_at": "2023-01-01T00:00:00.000Z"
+       }
+     ]
+   }
+
+================================================================================
+BOOKING ENDPOINTS
+================================================================================
+
+9. POST /bookings
+   Description: Book an event (authenticated users).
+   Headers: Authorization: Bearer <jwt_token>, Content-Type: application/json
+   Body:
+   {
+     "eventId": 1
+   }
+   Sample Response (201):
+   {
+     "message": "Booking successful",
+     "booking": {
+       "id": 1,
+       "userId": 1,
+       "eventId": 1,
+       "eventTitle": "Sample Event",
+       "eventDate": "2025-10-01T10:00:00.000Z",
+       "status": "confirmed",
+       "bookingDate": "2023-01-01T00:00:00.000Z"
+     }
+   }
+
+10. GET /bookings
+    Description: Get user's bookings (authenticated users).
+    Headers: Authorization: Bearer <jwt_token>
+    Query Params (optional): ?upcoming=true&past=false&limit=10
+    Sample Response (200):
+    {
+      "bookings": [
+        {
+          "id": 1,
+          "status": "confirmed",
+          "booking_date": "2023-01-01T00:00:00.000Z",
+          "eventId": 1,
+          "eventTitle": "Sample Event",
+          "eventDate": "2025-10-01T10:00:00.000Z",
+          "availableSeats": 99
+        }
+      ]
+    }
+
+11. DELETE /bookings/:id
+    Description: Cancel a booking (authenticated users).
+    Headers: Authorization: Bearer <jwt_token>
+    URL: /bookings/1
+    Sample Response (200):
+    {
+      "message": "Booking cancelled successfully"
+    }
+
+12. GET /bookings/events/:eventId/availability
+    Description: Get event availability (authenticated users).
+    Headers: Authorization: Bearer <jwt_token>
+    URL: /bookings/events/1/availability
+    Sample Response (200):
+    {
+      "availability": {
+        "id": 1,
+        "title": "Sample Event",
+        "date": "2025-10-01T10:00:00.000Z",
+        "capacity": 100,
+        "availableSeats": 99,
+        "status": "active",
+        "bookedSeats": 1
+      }
+    }
+
